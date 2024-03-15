@@ -1,6 +1,8 @@
 package com.project.spass.presentation.screens.sign_up_screen.component
 
+import android.content.Context
 import android.util.Patterns
+import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -12,6 +14,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -22,6 +25,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 import com.project.spass.R
 import com.project.spass.presentation.common.component.CustomDefaultBtn
 import com.project.spass.presentation.common.component.CustomTextField
@@ -31,18 +38,20 @@ import com.project.spass.presentation.graphs.auth_graph.AuthScreen
 import com.project.spass.presentation.ui.theme.PrimaryColor
 import com.project.spass.presentation.ui.theme.PrimaryLightColor
 import com.project.spass.presentation.ui.theme.TextColor
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun SignUpScreen(navController: NavController) {
-    var email by remember { mutableStateOf(TextFieldValue("")) }
-    var password by remember { mutableStateOf(TextFieldValue("")) }
-    var confirmPass by remember { mutableStateOf(TextFieldValue("")) }
-    var firstName by remember { mutableStateOf(TextFieldValue("")) }
-    var lastName by remember { mutableStateOf(TextFieldValue("")) }
-    var phoneNumber by remember { mutableStateOf(TextFieldValue("")) }
-    var address by remember { mutableStateOf(TextFieldValue("")) }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPass by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
     val emailErrorState = remember { mutableStateOf(false) }
     val passwordErrorState = remember { mutableStateOf(false) }
     val conPasswordErrorState = remember { mutableStateOf(false) }
@@ -52,6 +61,8 @@ fun SignUpScreen(navController: NavController) {
     val addressErrorState = remember { mutableStateOf(false) }
     val animate = remember { mutableStateOf(true) }
 
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     AnimatedContent(targetState = animate.value, transitionSpec = {
         slideInHorizontally(
@@ -102,14 +113,14 @@ fun SignUpScreen(navController: NavController) {
                 )
                 Spacer(modifier = Modifier.height(50.dp))
                 CustomTextField(
-                    placeholder = "example@email.com",
+                    placeholder = "example@gmail.com",
                     trailingIcon = R.drawable.mail,
                     label = "Email",
                     errorState = emailErrorState,
                     keyboardType = KeyboardType.Email,
                     visualTransformation = VisualTransformation.None,
                     onChanged = { newEmail ->
-                        email = newEmail
+                        email = newEmail.text
                     }
                 )
 
@@ -122,7 +133,7 @@ fun SignUpScreen(navController: NavController) {
                     errorState = passwordErrorState,
                     visualTransformation = PasswordVisualTransformation(),
                     onChanged = { newPass ->
-                        password = newPass
+                        password = newPass.text
                     }
                 )
 
@@ -136,7 +147,7 @@ fun SignUpScreen(navController: NavController) {
                     errorState = conPasswordErrorState,
                     visualTransformation = PasswordVisualTransformation(),
                     onChanged = { newPass ->
-                        confirmPass = newPass
+                        confirmPass = newPass.text
                     }
                 )
 
@@ -155,8 +166,8 @@ fun SignUpScreen(navController: NavController) {
                 CustomDefaultBtn(shapeSize = 50f, btnText = "Continue") {
                     //email pattern
                     val pattern = Patterns.EMAIL_ADDRESS
-                    val isEmailValid = pattern.matcher(email.text).matches()
-                    val isPassValid = password.text.length >= 8
+                    val isEmailValid = pattern.matcher(email).matches()
+                    val isPassValid = password.length >= 8
                     val conPassMatch = password == confirmPass
                     emailErrorState.value = !isEmailValid
                     passwordErrorState.value = !isPassValid
@@ -190,40 +201,6 @@ fun SignUpScreen(navController: NavController) {
                             Image(
                                 painter = painterResource(id = R.drawable.google_icon),
                                 contentDescription = "Google Login Icon"
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .size(50.dp)
-                                .background(
-                                    MaterialTheme.colors.PrimaryLightColor,
-                                    shape = CircleShape
-                                )
-                                .clickable {
-
-                                },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.twitter),
-                                contentDescription = "Twitter Login Icon"
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .size(50.dp)
-                                .background(
-                                    MaterialTheme.colors.PrimaryLightColor,
-                                    shape = CircleShape
-                                )
-                                .clickable {
-
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.facebook_2),
-                                contentDescription = "Facebook Login Icon"
                             )
                         }
 
@@ -306,7 +283,7 @@ fun SignUpScreen(navController: NavController) {
                     keyboardType = KeyboardType.Text,
                     visualTransformation = VisualTransformation.None,
                     onChanged = { newText ->
-                        firstName = newText
+                        firstName = newText.text
                     }
                 )
                 Spacer(modifier = Modifier.height(20.dp))
@@ -318,7 +295,7 @@ fun SignUpScreen(navController: NavController) {
                     keyboardType = KeyboardType.Text,
                     visualTransformation = VisualTransformation.None,
                     onChanged = { newText ->
-                        lastName = newText
+                        lastName = newText.text
                     }
                 )
 
@@ -331,21 +308,21 @@ fun SignUpScreen(navController: NavController) {
                     errorState = phoneNumberErrorState,
                     visualTransformation = VisualTransformation.None,
                     onChanged = { newNumber ->
-                        phoneNumber = newNumber
+                        phoneNumber = newNumber.text
                     }
                 )
 
 
                 Spacer(modifier = Modifier.height(20.dp))
                 CustomTextField(
-                    placeholder = "example: Dhaka, Bangladesh",
+                    placeholder = "example: Mohapada, Rasayani",
                     trailingIcon = R.drawable.location_point,
                     label = "Address",
                     keyboardType = KeyboardType.Password,
                     errorState = addressErrorState,
                     visualTransformation = VisualTransformation.None,
                     onChanged = { newText ->
-                        address = newText
+                        address = newText.text
                     }
                 )
                 Spacer(modifier = Modifier.height(10.dp))
@@ -360,16 +337,20 @@ fun SignUpScreen(navController: NavController) {
                 }
 
                 CustomDefaultBtn(shapeSize = 50f, btnText = "Continue") {
-                    val isPhoneValid = phoneNumber.text.isEmpty() || phoneNumber.text.length < 4
-                    val isFNameValid = firstName.text.isEmpty() || firstName.text.length < 3
-                    val isLNameValid = lastName.text.isEmpty() || lastName.text.length < 3
-                    val isAddressValid = address.text.isEmpty() || address.text.length < 5
-                    firstNameErrorState.value = !isFNameValid
-                    lastNameErrorState.value = !isLNameValid
-                    addressErrorState.value = !isAddressValid
-                    phoneNumberErrorState.value = !isPhoneValid
+                    val isPhoneValid = phoneNumber.isEmpty() || phoneNumber.length < 10 || phoneNumber.length > 10
+                    val isFNameValid = firstName.isEmpty()
+                    val isLNameValid = lastName.isEmpty()
+                    val isAddressValid = address.isEmpty()
+                    firstNameErrorState.value = isFNameValid
+                    lastNameErrorState.value = isLNameValid
+                    addressErrorState.value = isAddressValid
+                    phoneNumberErrorState.value = isPhoneValid
                     if (!isFNameValid && !isLNameValid && !isAddressValid && !isPhoneValid) {
-                        navController.navigate(AuthScreen.OTPScreen.route)
+                        coroutineScope.launch {
+                            signUpWithEmailAndPassword(context, email, password, firstName, lastName, phoneNumber, address) {
+                                navController.navigate(AuthScreen.SignInScreen.route)
+                            }
+                        }
                     }
                 }
             }
@@ -415,4 +396,59 @@ fun SignUpScreen(navController: NavController) {
     }
 }
 
+data class SignUpData(
+    val userId: String,
+    val email: String,
+    val password: String,
+    val firstName: String,
+    val lastName: String,
+    val phoneNumber: String,
+    val address: String
+)
 
+private suspend fun signUpWithEmailAndPassword(
+    context: Context,
+    email: String,
+    password: String,
+    firstName: String,
+    lastName: String,
+    phoneNumber: String,
+    address: String,
+    onSignUpSuccess: () -> Unit
+) {
+    try {
+        val auth = FirebaseAuth.getInstance()
+        val result = auth.createUserWithEmailAndPassword(email, password).await()
+        if (result.user != null) {
+            // User signed up successfully
+            // You can navigate to the next screen or perform additional tasks here
+            Toast.makeText(context, "Sign-up successful", Toast.LENGTH_SHORT).show()
+            val signUpData = SignUpData(
+                userId = result.user!!.uid,
+                email = email,
+                password = password,
+                firstName = firstName,
+                lastName = lastName,
+                phoneNumber = phoneNumber,
+                address = address
+            )
+            saveUserDataToFirebase(signUpData)
+            onSignUpSuccess.invoke()
+        } else {
+            // Handle sign-up failure
+            Toast.makeText(context, "Sign-up failed", Toast.LENGTH_SHORT).show()
+        }
+    } catch (e: FirebaseAuthException) {
+        // Handle FirebaseAuthException
+        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+    } catch (e: Exception) {
+        // Handle other exceptions
+        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun saveUserDataToFirebase(userData: SignUpData) {
+    val database = Firebase.database
+    val usersRef = database.getReference("users")
+    usersRef.child(userData.userId).setValue(userData)
+}

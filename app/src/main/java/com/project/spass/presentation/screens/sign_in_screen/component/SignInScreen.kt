@@ -1,7 +1,9 @@
 package com.project.spass.presentation.screens.sign_in_screen.component
 
 
+import android.content.Context
 import android.util.Patterns
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,12 +34,18 @@ import com.project.spass.presentation.graphs.auth_graph.AuthScreen
 import com.project.spass.presentation.ui.theme.PrimaryColor
 import com.project.spass.presentation.ui.theme.PrimaryLightColor
 import com.project.spass.presentation.ui.theme.TextColor
+import kotlinx.coroutines.tasks.await
 
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 
 @Composable
 fun LoginScreen(navController: NavController) {
-    var email by remember { mutableStateOf(TextFieldValue("")) }
-    var password by remember { mutableStateOf(TextFieldValue("")) }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var checkBox by remember {
         mutableStateOf(false)
     }
@@ -47,6 +55,8 @@ fun LoginScreen(navController: NavController) {
     val passwordErrorState = remember {
         mutableStateOf(false)
     }
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
 
     Column(
@@ -89,7 +99,7 @@ fun LoginScreen(navController: NavController) {
             keyboardType = KeyboardType.Email,
             visualTransformation = VisualTransformation.None,
             onChanged = { newEmail ->
-                email = newEmail
+                email = newEmail.text
             }
         )
         Spacer(modifier = Modifier.height(20.dp))
@@ -101,7 +111,7 @@ fun LoginScreen(navController: NavController) {
             errorState = passwordErrorState,
             visualTransformation = PasswordVisualTransformation(),
             onChanged = { newPass ->
-                password = newPass
+                password = newPass.text
             }
         )
         Spacer(modifier = Modifier.height(10.dp))
@@ -142,12 +152,27 @@ fun LoginScreen(navController: NavController) {
         CustomDefaultBtn(shapeSize = 50f, btnText = "Continue") {
             //email pattern
             val pattern = Patterns.EMAIL_ADDRESS
-            val isEmailValid = pattern.matcher(email.text).matches()
-            val isPassValid = password.text.length >= 8
+            val isEmailValid = pattern.matcher(email).matches()
+            val isPassValid = password.length >= 8
             emailErrorState.value = !isEmailValid
             passwordErrorState.value = !isPassValid
             if (isEmailValid && isPassValid) {
-                navController.navigate(AuthScreen.SignInSuccess.route)
+                coroutineScope.launch {
+                    signInWithEmailAndPassword(context, email, password) {
+
+                        if(checkBox){
+                            // save user email and password to shared preference
+                            val sharedPref = context.getSharedPreferences("spass", Context.MODE_PRIVATE)
+                            with(sharedPref.edit()) {
+                                putString("email", email)
+                                putString("password", password)
+                                apply()
+                            }
+                        }
+
+                        navController.navigate(AuthScreen.SignInSuccess.route)
+                    }
+                }
             }
         }
         Column(
@@ -177,40 +202,7 @@ fun LoginScreen(navController: NavController) {
                         contentDescription = "Google Login Icon"
                     )
                 }
-                Box(
-                    modifier = Modifier
-                        .size(50.dp)
-                        .background(
-                            MaterialTheme.colors.PrimaryLightColor,
-                            shape = CircleShape
-                        )
-                        .clickable {
 
-                        },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.twitter),
-                        contentDescription = "Twitter Login Icon"
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(50.dp)
-                        .background(
-                            MaterialTheme.colors.PrimaryLightColor,
-                            shape = CircleShape
-                        )
-                        .clickable {
-
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.facebook_2),
-                        contentDescription = "Facebook Login Icon"
-                    )
-                }
 
             }
             Row(
@@ -233,4 +225,25 @@ fun LoginScreen(navController: NavController) {
     }
 }
 
-
+private suspend fun signInWithEmailAndPassword(
+    context: Context,
+    email: String,
+    password: String,
+    onSignInSuccess: () -> Unit
+) {
+    try {
+        val auth = FirebaseAuth.getInstance()
+        val result = auth.signInWithEmailAndPassword(email, password).await()
+        if (result.user != null) {
+            onSignInSuccess.invoke()
+        } else {
+            // Handle sign-in failure
+            Toast.makeText(context, "Sign-in failed", Toast.LENGTH_SHORT).show()
+        }
+    } catch (e: Exception) {
+        // Handle exceptions
+        println(e.message)
+        e.printStackTrace()
+        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+    }
+}

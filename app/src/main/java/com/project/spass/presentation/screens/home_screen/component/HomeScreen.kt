@@ -61,7 +61,7 @@ fun HomeScreen(
                 .padding(padding)
                 .verticalScroll(boxScrollState)
         ) {
-            HomeNavGraph(navHostController = navController, searchText = searchText)
+            HomeNavGraph(navController, searchText = searchText)
         }
     }
 }

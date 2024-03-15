@@ -52,6 +52,4 @@ fun SignInScreen(navController: NavController) {
             navController.navigate(Graph.HOME)
         }
     }
-
-
 }

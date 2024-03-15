@@ -22,7 +22,7 @@ import com.project.spass.presentation.screens.sign_up_screen.component.SignUpScr
 fun NavGraphBuilder.authNavGraph(navController: NavHostController, context: Context) {
     navigation(
         route = Graph.AUTHENTICATION,
-        startDestination = AuthScreen.SignInSuccess.route
+        startDestination = AuthScreen.OnBoardingScreen.route
     ) {
         composable(AuthScreen.OnBoardingScreen.route) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

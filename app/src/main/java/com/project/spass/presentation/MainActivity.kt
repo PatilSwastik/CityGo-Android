@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import com.project.spass.presentation.graphs.root_graph.RootNavigationGraph
 import com.project.spass.presentation.ui.theme.SPass
 import dagger.hilt.android.AndroidEntryPoint
+import com.google.firebase.FirebaseApp
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
