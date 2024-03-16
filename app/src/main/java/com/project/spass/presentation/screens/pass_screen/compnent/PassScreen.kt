@@ -213,7 +213,7 @@ fun PassScreen() {
     }
 }
 
-fun fetchPassId(callback: (CurrentUserData) -> Unit) {
+private fun fetchPassId(callback: (CurrentUserData) -> Unit) {
     val userId = FirebaseAuth.getInstance().currentUser?.uid
     val database = FirebaseDatabase.getInstance()
     val userPassReference: DatabaseReference = database.getReference("users").child(userId.toString())
@@ -240,7 +240,7 @@ fun fetchPassId(callback: (CurrentUserData) -> Unit) {
     })
 }
 
-fun fetchOriginalPassData( passId: String, callback: (PassDataFromDepot) -> Unit){
+private fun fetchOriginalPassData( passId: String, callback: (PassDataFromDepot) -> Unit){
     val database = FirebaseDatabase.getInstance()
     val userPassReference: DatabaseReference = database.getReference("passes").child(passId)
     userPassReference.addListenerForSingleValueEvent(object : ValueEventListener {
