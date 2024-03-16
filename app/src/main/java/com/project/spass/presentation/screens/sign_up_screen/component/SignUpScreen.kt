@@ -9,19 +9,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -63,6 +68,7 @@ fun SignUpScreen(navController: NavController) {
 
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
 
     AnimatedContent(targetState = animate.value, transitionSpec = {
         slideInHorizontally(
@@ -98,7 +104,9 @@ fun SignUpScreen(navController: NavController) {
                         Text(
                             text = "Sign Up",
                             color = MaterialTheme.colors.TextColor,
-                            fontSize = 18.sp
+                            fontSize = 18.sp,
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold
                         )
                     }
 
@@ -107,11 +115,13 @@ fun SignUpScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(50.dp))
                 Text(text = "Register Account", fontSize = 26.sp, fontWeight = FontWeight.Bold)
                 Text(
+                    modifier = Modifier.padding(top = 10.dp),
                     text = "Complete your details or continue\nwith social media.",
                     color = MaterialTheme.colors.TextColor,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.SemiBold
                 )
-                Spacer(modifier = Modifier.height(50.dp))
+                Spacer(modifier = Modifier.height(40.dp))
                 CustomTextField(
                     placeholder = "example@gmail.com",
                     trailingIcon = R.drawable.mail,

@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
@@ -55,6 +56,7 @@ fun CustomTextField(
             )
         },
         singleLine = true,
+        maxLines = 1,
         colors = TextFieldDefaults.outlinedTextFieldColors(
             trailingIconColor = if (text.text.isNotEmpty()) MaterialTheme.colors.PrimaryColor else MaterialTheme.colors.TextColor,
             cursorColor = MaterialTheme.colors.PrimaryColor,
@@ -63,7 +65,7 @@ fun CustomTextField(
             textColor = MaterialTheme.colors.TextColor
         ),
         visualTransformation = visualTransformation,
-        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = keyboardType),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         isError = errorState.value,
         modifier = Modifier
             .fillMaxWidth()

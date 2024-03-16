@@ -7,4 +7,5 @@ sealed class AuthScreen(val route: String) {
     object SignInSuccess : AuthScreen("sign_success")
     object ForgetPasswordScreen : AuthScreen("forget_password_screen")
     object OTPScreen : AuthScreen("otp_screen")
+    object PassScreen : AuthScreen("pass_screen")
 }

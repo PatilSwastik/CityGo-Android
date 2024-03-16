@@ -14,6 +14,7 @@ import com.project.spass.presentation.graphs.auth_graph.AuthScreen
 import com.project.spass.presentation.screens.forget_password_screen.component.ForgetPasswordScreen
 import com.project.spass.presentation.screens.on_boarding_screen.component.SplashScreen
 import com.project.spass.presentation.screens.otp_screen.component.OTPScreen
+import com.project.spass.presentation.screens.pass_screen.compnent.PassScreen
 import com.project.spass.presentation.screens.sign_in_screen.component.LoginScreen
 import com.project.spass.presentation.screens.sign_success_screen.component.SignInScreen
 import com.project.spass.presentation.screens.sign_up_screen.component.SignUpScreen
@@ -22,7 +23,7 @@ import com.project.spass.presentation.screens.sign_up_screen.component.SignUpScr
 fun NavGraphBuilder.authNavGraph(navController: NavHostController, context: Context) {
     navigation(
         route = Graph.AUTHENTICATION,
-        startDestination = AuthScreen.OnBoardingScreen.route
+        startDestination = AuthScreen.SignInSuccess.route
     ) {
         composable(AuthScreen.OnBoardingScreen.route) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -65,6 +66,5 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController, context: Cont
         composable(AuthScreen.SignInSuccess.route) {
             SignInScreen(navController = navController)
         }
-
     }
 }

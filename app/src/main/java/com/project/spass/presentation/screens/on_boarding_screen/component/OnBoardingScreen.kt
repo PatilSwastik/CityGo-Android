@@ -54,12 +54,12 @@ fun SplashScreen(navController: NavController) {
     val sharedPref = context.getSharedPreferences("spass", Context.MODE_PRIVATE)
 
     // Check firebase auth if user is logged in
-     val auth = FirebaseAuth.getInstance()
+ /*    val auth = FirebaseAuth.getInstance()
      val user = auth.currentUser
 
     if(user != null){
         navController.navigate(AuthScreen.SignInSuccess.route)
-    }
+    }*/
 
     val isFirstTime = sharedPref.getBoolean("isFirstTime", true)
 

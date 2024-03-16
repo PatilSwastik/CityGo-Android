@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,12 +30,6 @@ fun SignInScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "Login Success",
-                color = MaterialTheme.colors.TextColor,
-                fontWeight = FontWeight(700),
-                fontSize = 18.sp
-            )
         }
         Image(
             painter = painterResource(id = R.drawable.success),
@@ -43,7 +38,8 @@ fun SignInScreen(navController: NavController) {
         Text(
             text = "Login Successful",
             fontSize = 25.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily.Serif
         )
 
         Spacer(modifier = Modifier.height(50.dp))

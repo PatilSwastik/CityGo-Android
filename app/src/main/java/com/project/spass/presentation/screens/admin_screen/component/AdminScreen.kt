@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.project.spass.presentation.graphs.detail_graph.DetailScreen
@@ -111,4 +112,10 @@ fun AdminScreen(navController: NavHostController) {
 
     }
 
+}
+
+@Preview
+@Composable
+fun ShopHomeScreen.AdminScreen(){
+    AdminScreen()
 }

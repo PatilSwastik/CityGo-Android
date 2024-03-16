@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
@@ -344,4 +345,10 @@ private fun createDefaultBitmap(sizePx: Int): Bitmap {
     return Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888).apply {
         eraseColor(Color.TRANSPARENT)
     }
+}
+
+@Preview
+@Composable
+fun PassScreenPreview() {
+    PassScreen()
 }
