@@ -15,6 +15,7 @@ import com.google.firebase.database.ValueEventListener
 import com.project.spass.presentation.graphs.Graph
 import com.project.spass.presentation.graphs.detail_graph.DetailScreen
 import com.project.spass.presentation.graphs.detail_graph.detailNavGraph
+import com.project.spass.presentation.help_desk.HelpDesk
 import com.project.spass.presentation.screens.dashboard_screen.component.DashboardScreen
 import com.project.spass.presentation.screens.profile_screen.component.ProfileScreen
 
@@ -40,6 +41,11 @@ fun HomeNavGraph(
         composable(ShopHomeScreen.ProfileScreen.route) {
             ProfileScreen(navController)
         }
+        composable(ShopHomeScreen.HelpDeskScreen.route) {
+            HelpDesk()
+        }
+
+
         //detail graph
         detailNavGraph(navController = navController)
     }

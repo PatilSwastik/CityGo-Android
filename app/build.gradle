@@ -110,4 +110,7 @@ dependencies {
     //Preview Rendering
     debugImplementation "androidx.compose.ui:ui-tooling"
 
+    //Gemini AI
+    implementation("com.google.ai.client.generativeai:generativeai:0.1.2")
+
 }

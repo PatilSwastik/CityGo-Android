@@ -6,4 +6,5 @@ sealed class ShopHomeScreen(val route: String) {
     object ProfileScreen : ShopHomeScreen("profile_screen")
 
     object AdminScreen : ShopHomeScreen("admin_screen")
+    object HelpDeskScreen : ShopHomeScreen("helpdesk_screen")
 }

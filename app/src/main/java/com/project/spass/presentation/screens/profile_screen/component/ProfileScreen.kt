@@ -43,6 +43,7 @@ import com.project.spass.presentation.ui.theme.TextColor
 import com.project.spass.presentation.ui.theme.PrimaryColor
 import com.project.spass.R
 import com.project.spass.presentation.graphs.auth_graph.AuthScreen
+import com.project.spass.presentation.graphs.home_graph.ShopHomeScreen
 import kotlinx.coroutines.tasks.await
 
 @Composable
@@ -235,11 +236,11 @@ fun ProfileScreen(
                 .background(Color(0x8DB3B0B0), shape = RoundedCornerShape(10.dp))
                 .clip(RoundedCornerShape(10.dp))
                 .clickable {
-
+                    navController.navigate(ShopHomeScreen.HelpDeskScreen.route)
                 }
                 .padding(5.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.question_mark),
@@ -293,6 +294,7 @@ private fun onLogout(navController: NavController,context : Context){
     FirebaseAuth.getInstance().signOut()
     navController.navigate(AuthScreen.SignInScreen.route)
 }
+
 
 private fun uploadImageToFirebaseStorage(uri: Uri, imageUrl: (String) -> Unit) {
     val storageRef = Firebase.storage.reference
