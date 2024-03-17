@@ -121,7 +121,7 @@ private fun CoroutineScope.fetchResponse(prompt: String, onResponseReceived: (St
 
 suspend fun getGeminiResponse(prompt: String): String {
     val generativeModel = GenerativeModel(
-        modelName = "gemini-pro", apiKey = "AIzaSyDVaxIb8HyTFbX1HxEBVF7N-ZD87uVzh44"
+        modelName = "gemini-pro", apiKey = "GEMINI_API_KEY"
     )
 
     val response = generativeModel.generateContent(prompt)
