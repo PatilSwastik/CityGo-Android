@@ -4,6 +4,13 @@ package com.project.spass.presentation.screens.sign_in_screen.component
 import android.content.Context
 import android.util.Patterns
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,12 +20,13 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -32,18 +40,30 @@ import com.project.spass.presentation.common.component.DefaultBackArrow
 import com.project.spass.presentation.common.component.ErrorSuggestion
 import com.project.spass.presentation.graphs.auth_graph.AuthScreen
 import com.project.spass.presentation.ui.theme.PrimaryColor
-import com.project.spass.presentation.ui.theme.PrimaryLightColor
 import com.project.spass.presentation.ui.theme.TextColor
 import kotlinx.coroutines.tasks.await
 
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.android.gms.common.api.ApiException
+import com.project.spass.presentation.screens.home_screen.component.HomeScreen
+import com.project.spass.presentation.screens.sign_in_screen.AuthViewModel
+import com.project.spass.presentation.screens.sign_in_screen.utils.AuthResultContract
+import com.project.spass.presentation.ui.theme.PrimaryLightColor
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
+@OptIn(ExperimentalMaterialApi::class)
+@ExperimentalAnimationApi
+@ExperimentalFoundationApi
+@ExperimentalCoroutinesApi
+@ExperimentalMaterialApi
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = hiltViewModel()) {
+    var text by remember { mutableStateOf<String?>(null) }
+    val user by remember(authViewModel) { authViewModel.user }.collectAsState()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var checkBox by remember {
@@ -57,8 +77,26 @@ fun LoginScreen(navController: NavController) {
     }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val signInRequestCode = 1
 
-
+    val authResultLauncher =
+        rememberLauncherForActivityResult(contract = AuthResultContract()) { task ->
+            try {
+                val account = task?.getResult(ApiException::class.java)
+                if (account == null) {
+                    text = "Google sign in failed"
+                } else {
+                    coroutineScope.launch {
+                        authViewModel.signIn(
+                            email = account.email.toString(),
+                            displayName = account.displayName.toString(),
+                        )
+                    }
+                }
+            } catch (e: ApiException) {
+                text = "Google sign in failed"
+            }
+        }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -179,7 +217,8 @@ fun LoginScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = 50.dp),
-            verticalArrangement = Arrangement.Bottom
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -194,17 +233,26 @@ fun LoginScreen(navController: NavController) {
                         .background(
                             MaterialTheme.colors.PrimaryLightColor,
                             shape = CircleShape
-                        ),
+                        ).clickable {
+                            // Handle Google Sign-in
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.google_icon),
-                        contentDescription = "Google Login Icon"
+                        contentDescription = "Google Login Icon",
                     )
                 }
 
 
             }
+            AuthView(
+                errorText = text,
+                onClick = {
+                    text = null
+                    authResultLauncher.launch(signInRequestCode)
+                }
+            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -220,9 +268,10 @@ fun LoginScreen(navController: NavController) {
                     })
             }
         }
-
-
     }
+   /* user?.let {
+        HomeScreen(user = it)
+    }*/
 }
 
 private suspend fun signInWithEmailAndPassword(
@@ -246,4 +295,102 @@ private suspend fun signInWithEmailAndPassword(
         e.printStackTrace()
         Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
     }
+}
+
+@ExperimentalMaterialApi
+@Composable
+fun AuthView(
+    errorText: String?,
+    onClick: () -> Unit
+) {
+    var isLoading by remember { mutableStateOf(false) }
+
+    SignInButton(
+        text = "Sign in with Google",
+        loadingText = "Signing in...",
+        isLoading = isLoading,
+        icon = painterResource(id = R.drawable.google_icon),
+        onClick = {
+            isLoading = true
+            onClick()
+        }
+    )
+
+    errorText?.let {
+        isLoading = false
+        Spacer(modifier = Modifier.height(30.dp))
+        Text(text = it)
+    }
+}
+
+@ExperimentalMaterialApi
+@Composable
+fun SignInButton(
+    text: String,
+    loadingText: String = "Signing in...",
+    icon: Painter,
+    isLoading: Boolean = false,
+    //shape: Shape = Shapes.medium,
+    borderColor: Color = Color.LightGray,
+    backgroundColor: Color = MaterialTheme.colors.surface,
+    progressIndicatorColor: Color = MaterialTheme.colors.primary,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.clickable(
+            enabled = !isLoading,
+            onClick = onClick
+        ),
+        border = BorderStroke(width = 1.dp, color = borderColor),
+        color = backgroundColor
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(
+                    start = 12.dp,
+                    end = 16.dp,
+                    top = 12.dp,
+                    bottom = 12.dp
+                )
+                .animateContentSize(
+                    animationSpec = tween(
+                        durationMillis = 300,
+                        easing = LinearOutSlowInEasing
+                    )
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Icon(
+                painter = icon,
+                contentDescription = "SignInButton",
+                tint = Color.Unspecified
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(text = if (isLoading) loadingText else text)
+            if (isLoading) {
+                Spacer(modifier = Modifier.width(16.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .height(16.dp)
+                        .width(16.dp),
+                    strokeWidth = 2.dp,
+                    color = progressIndicatorColor
+                )
+            }
+        }
+    }
+}
+
+@ExperimentalMaterialApi
+@Composable
+fun SignInButtonPreview() {
+    SignInButton(
+        text = "Sign in with Google",
+        loadingText = "Signing in...",
+        isLoading = false,
+        icon = painterResource(id = R.drawable.google_icon),
+        onClick = { }
+    )
 }

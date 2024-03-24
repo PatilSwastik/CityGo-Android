@@ -3,12 +3,11 @@ package com.project.spass.presentation.screens.pass_screen.compnent
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Text
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,10 +21,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberImagePainter
+import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.ktx.Firebase
@@ -34,9 +33,9 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.WriterException
 import com.google.zxing.qrcode.QRCodeWriter
+import com.project.spass.presentation.screens.profile_screen.component.ComponentCircle
+import com.project.spass.presentation.ui.animations.shimmerLoadingAnimation
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
 data class CurrentUserData(
@@ -46,201 +45,206 @@ data class CurrentUserData(
     val address: String? = "",
     val phoneNumber: String? = "",
     val profileImage: String? = "",
-    val purchaseDate: String? = "",
-    val expiryDate: String? = "",
-    val price : String? = "",
-    val passId: String? = ""
-)
-
-data class PassDetails(
-    val passId: String ?= "",
-    val purchaseDate: String? = "",
-    val expiryDate: String? = ""
-)
-
-data class UserData1(
-    val firstName: String? = "",
-    val lastName: String? = "",
-    val email: String? = "",
-    val address: String? = "",
-    val phoneNumber: String? = "",
-    val source : String? = "",
-    val destination : String? = "",
-    val price : String? = "",
-    var passes: List<PassData>? = null
+    val passes : List<PassData> = emptyList(),
 )
 
 data class PassData(
     val passId: String? = "",
+    val expiryDate: String? = "",
     val purchaseDate: String? = "",
-    val expiryDate: String? = ""
 )
 
 data class PassDataFromDepot(
-    val passId: String ?= "",
+    val passId: String? = "",
     val source: String? = "",
     val destination: String? = "",
     val price: String? = ""
-    )
+)
 
 @Composable
 fun PassScreen() {
+    var isLoadingCompleted by remember { mutableStateOf(false) }
     val userId = FirebaseAuth.getInstance().currentUser?.uid
-    var passId by remember { mutableStateOf<String?>(null) }
-    var passDataFromDepot by remember { mutableStateOf<PassDataFromDepot?>(null) }
     var currentUserData by remember { mutableStateOf<CurrentUserData?>(null) }
-    fetchPassId(){ it ->
-        println(it)
+
+    fetchPassId {
         currentUserData = it
-        passId = currentUserData!!.passId
-        fetchOriginalPassData(passId.toString()){
-            passDataFromDepot = it
-            println("Pass data from depot: $passDataFromDepot")
-        }
+        isLoadingCompleted = true
     }
 
     var imageUrl by remember(userId) { mutableStateOf<String?>(null) }
     val storageRef = Firebase.storage.reference
 
-    ElevatedCard(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(
-            pressedElevation = 16.dp
-        )
-
-    ) {
-        Column(
+    if (isLoadingCompleted) {
+        Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(androidx.compose.ui.graphics.Color.White)
                 .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
         ) {
+            Column(
+                modifier = Modifier.align(alignment = Alignment.TopCenter)
+            ) {
 
-            Spacer(modifier = Modifier.height(16.dp))
-            // Display other user data
-            currentUserData?.let { pass ->
-                if(pass.passId != ""){
-                    // Profile Image
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(150.dp)
-                            .clip(RoundedCornerShape(10.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            painter = rememberQrBitmapPainter(
-                                content = "http://10.0.2.2/qr_code/${userId}/${pass.passId}",
-                                size = 300.dp,
-                                padding = 1.dp
-                            ),
-                            contentDescription = null
+                // Display user data
+                currentUserData?.let { data ->
+                    if (data.passes[0].passId != "") {
+                        // Personal Data
+                        Spacer(modifier = Modifier.padding(24.dp))
+                        Text(
+                            text = "Name : ${currentUserData!!.firstName ?: ""} ${currentUserData?.lastName ?: ""}",
+                            textAlign = TextAlign.Left,fontSize = 20.sp
                         )
-                    }
+                        Spacer(modifier = Modifier.padding(8.dp))
+                        Text(
+                            text = "Contact : ${currentUserData!!.phoneNumber}",
+                            textAlign = TextAlign.Left,fontSize = 20.sp
+                        )
+                        Spacer(modifier = Modifier.padding(8.dp))
+                        Text(
+                            text = "Email : ${currentUserData!!.email}",
+                            textAlign = TextAlign.Left,fontSize = 20.sp
+                        )
+                        Spacer(modifier = Modifier.padding(8.dp))
+                        Text(
+                            text = "Address : ${currentUserData!!.address}",
+                            textAlign = TextAlign.Left,fontSize = 20.sp
+                        )
 
-                    LaunchedEffect(userId) {
-                        if (userId != null) {
-                            val imageRef = storageRef.child("images/$userId")
-                            try {
-                                val url = imageRef.downloadUrl.await()
-                                // Update the imageUrl state with the downloaded URL
-                                imageUrl = url.toString()
-                            } catch (e: Exception) {
-                                // Handle exceptions
-                                e.printStackTrace()
-                            }
+                        // Pass Data
+                        Spacer(modifier = Modifier.padding(16.dp))
+
+                        // Pass Each Pass Data to the Pass Composable
+                        currentUserData!!.passes.forEachIndexed { index, pass ->
+                            Pass(pass = pass)
+                            Spacer(modifier = Modifier.padding(8.dp))
                         }
                     }
+                    else {
+                        Row {
+                            // Profile Image
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(150.dp)
+                                    .clip(RoundedCornerShape(10.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
 
+                                if(currentUserData!!.profileImage == null) {
+                                    ComponentCircle(
+                                        isLoadingCompleted = isLoadingCompleted,
+                                    )
+                                }
 
-                    Text(
-                        text = "Name : ${currentUserData!!.firstName ?: ""} ${currentUserData?.lastName ?: ""}",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
-                    Text(text = "Purchased on : ${currentUserData!!.purchaseDate}", modifier = Modifier.padding(16.dp), textAlign = TextAlign.Left)
-                    Text(text = "Expires on : ${currentUserData!!.expiryDate}", modifier = Modifier.padding(16.dp), textAlign = TextAlign.Left)
-                    Text(text = "Address : ${currentUserData!!.address}", modifier = Modifier.padding(16.dp), textAlign = TextAlign.Left)
-
-                    passDataFromDepot?.let {
-                        Text(text = "Source : ${passDataFromDepot!!.source}", modifier = Modifier.padding(16.dp), textAlign = TextAlign.Left)
-                        Text(text = "Destination : ${passDataFromDepot!!.destination}", modifier = Modifier.padding(16.dp), textAlign = TextAlign.Left)
-                        Text(text = "Price : ${passDataFromDepot!!.price}", modifier = Modifier.padding(16.dp), textAlign = TextAlign.Left)
-                    }
-
-                }else{
-                    Row {
-                        // Profile Image
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(150.dp)
-                                .clip(RoundedCornerShape(10.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            currentUserData!!.profileImage?.let { url ->
-                                Image(
-                                    painter = rememberImagePainter(url),
-                                    contentDescription = "Profile Picture",
-                                    modifier = Modifier
-                                        .size(150.dp)
-                                        .clip(CircleShape)
-                                )
+                                currentUserData!!.profileImage?.let { url ->
+                                    Image(
+                                        painter = rememberAsyncImagePainter(url) ,
+                                        contentDescription = "Profile Picture",
+                                        modifier = Modifier
+                                            .size(150.dp)
+                                            .clip(CircleShape)
+                                    )
+                                }
                             }
                         }
-                    }
+                        Spacer(modifier = Modifier.padding(24.dp))
+                        Text(
+                            text = "Name : ${currentUserData?.firstName ?: ""} ${currentUserData?.lastName ?: ""}",
+                            textAlign = TextAlign.Left, fontSize = 20.sp
+                        )
+                        Spacer(modifier = Modifier.padding(8.dp))
+                        Text(
+                            text = "Email : ${currentUserData!!.email}",
+                            textAlign = TextAlign.Left,fontSize = 20.sp
+                        )
+                        Spacer(modifier = Modifier.padding(8.dp))
+                        Text(
+                            text = "Contact : ${currentUserData!!.phoneNumber}",
+                            textAlign = TextAlign.Left,fontSize = 20.sp
+                        )
+                        Spacer(modifier = Modifier.padding(8.dp))
 
-                    Text(
-                        text = "Name : ${currentUserData?.firstName ?: ""} ${currentUserData?.lastName ?: ""}",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
-                    Text(text = "Email : ${currentUserData!!.email}", modifier = Modifier.padding(16.dp), textAlign = TextAlign.Left)
-                    Text(text = "Phone Number : ${currentUserData!!.phoneNumber}", modifier = Modifier.padding(16.dp), textAlign = TextAlign.Left)
-                    Text(text = "Address : ${currentUserData!!.address}", modifier = Modifier.padding(16.dp), textAlign = TextAlign.Left)
-                // Add other fields as needed
+                        Text(
+                            text = "Address : ${currentUserData!!.address}",
+                            textAlign = TextAlign.Left,fontSize = 20.sp
+                        )
+
+                        // Add other fields as needed
+                    }
                 }
+
             }
         }
     }
+    else {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(androidx.compose.ui.graphics.Color.White)
+                .padding(48.dp),
+        ) {
+            Column(
+                modifier = Modifier.align(alignment = Alignment.TopCenter)
+            ) {
+                Spacer(modifier = Modifier.padding(8.dp))
+                ComponentRectangleLineLong(isLoadingCompleted = isLoadingCompleted)
+                Spacer(modifier = Modifier.padding(4.dp))
+                ComponentRectangleLineLong( isLoadingCompleted = isLoadingCompleted )
+                Spacer(modifier = Modifier.padding(4.dp))
+                ComponentRectangleLineLong( isLoadingCompleted = isLoadingCompleted )
+                Spacer(modifier = Modifier.padding(4.dp))
+                ComponentRectangleLineLong( isLoadingCompleted = isLoadingCompleted )
+                Spacer(modifier = Modifier.padding(24.dp))
+                ComponentRectangle(isLoadingCompleted = isLoadingCompleted)
+                Spacer(modifier = Modifier.padding(24.dp))
+                ComponentRectangle(isLoadingCompleted = isLoadingCompleted)
+            }
+        }
+    }
+
+
 }
 
 private fun fetchPassId(callback: (CurrentUserData) -> Unit) {
     val userId = FirebaseAuth.getInstance().currentUser?.uid
     val database = FirebaseDatabase.getInstance()
-    val userPassReference: DatabaseReference = database.getReference("users").child(userId.toString())
+    val userPassReference: DatabaseReference =
+        database.getReference("users").child(userId.toString())
 
     userPassReference.addListenerForSingleValueEvent(object : ValueEventListener {
         override fun onDataChange(dataSnapshot: DataSnapshot) {
-           var currentUserData = CurrentUserData(
+
+            val passesSnapshot = dataSnapshot.child("passes").children
+
+            val passesList = passesSnapshot.map { passSnapshot ->
+                PassData(
+                    passId = passSnapshot.child("passId").value.toString(),
+                    purchaseDate = passSnapshot.child("purchaseDate").value.toString(),
+                    expiryDate = passSnapshot.child("expiryDate").value.toString(),
+                )
+            }
+
+            val currentUserData = CurrentUserData(
                 firstName = dataSnapshot.child("firstName").value.toString(),
                 lastName = dataSnapshot.child("lastName").value.toString(),
                 email = dataSnapshot.child("email").value.toString(),
                 address = dataSnapshot.child("address").value.toString(),
                 phoneNumber = dataSnapshot.child("phoneNumber").value.toString(),
                 profileImage = dataSnapshot.child("profileImage").value.toString(),
-                expiryDate = dataSnapshot.child("passes").child("expiryDate").value.toString(),
-                purchaseDate = dataSnapshot.child("passes").child("purchaseDate").value.toString(),
-               passId = dataSnapshot.child("passes").child("passId").value.toString(),
-              )
+                passes = passesList
+            )
             callback(currentUserData)
         }
 
         override fun onCancelled(databaseError: DatabaseError) {
             // Handle database error
+            callback(CurrentUserData())
         }
     })
 }
 
-private fun fetchOriginalPassData( passId: String, callback: (PassDataFromDepot) -> Unit){
+private fun fetchOriginalPassData(passId: String, callback: (PassDataFromDepot) -> Unit) {
     val database = FirebaseDatabase.getInstance()
     val userPassReference: DatabaseReference = database.getReference("passes").child(passId)
     userPassReference.addListenerForSingleValueEvent(object : ValueEventListener {
@@ -292,14 +296,6 @@ fun rememberQrBitmapPainter(
     }
 }
 
-
-/**
- * Generates a QR code bitmap for the given [content].
- * The [sizePx] parameter defines the size of the QR code in pixels.
- * The [paddingPx] parameter defines the padding of the QR code in pixels.
- * Returns null if the QR code could not be generated.
- * This function is suspendable and should be called from a coroutine is thread-safe.
- */
 private suspend fun generateQrBitmap(
     content: String,
     sizePx: Int,
@@ -335,20 +331,89 @@ private suspend fun generateQrBitmap(
     }
 }
 
-/**
- * Creates a default bitmap with the given [sizePx].
- * The bitmap is transparent.
- * This is used as a fallback if the QR code could not be generated.
- * The bitmap is created on the UI thread.
- */
 private fun createDefaultBitmap(sizePx: Int): Bitmap {
     return Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888).apply {
         eraseColor(Color.TRANSPARENT)
     }
 }
 
-@Preview
 @Composable
-fun PassScreenPreview() {
-    PassScreen()
+fun ComponentRectangle(isLoadingCompleted: Boolean) {
+    Box(
+        modifier = Modifier
+            .clip(shape = RoundedCornerShape(24.dp))
+            .background(color = androidx.compose.ui.graphics.Color.LightGray)
+            .height(200.dp)
+            .fillMaxWidth()
+            .shimmerLoadingAnimation(isLoadingCompleted)
+    )
 }
+
+@Composable
+fun ComponentRectangleLineLong(isLoadingCompleted: Boolean) {
+    Box(
+        modifier = Modifier
+            .clip(shape = RoundedCornerShape(8.dp))
+            .background(color = androidx.compose.ui.graphics.Color.LightGray)
+            .size(height = 30.dp, width = 200.dp)
+            .shimmerLoadingAnimation(isLoadingCompleted)
+    )
+}
+
+@Composable
+fun Pass(
+    pass: PassData,
+) {
+    var passDataFromDepot by remember { mutableStateOf<PassDataFromDepot?>(null) }
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
+    fetchOriginalPassData(pass.passId.toString()) {
+        passDataFromDepot = it
+    }
+
+    passDataFromDepot?.let {
+        Box(
+            modifier = Modifier
+                .clip(shape = RoundedCornerShape(24.dp))
+                .background(color = com.project.spass.presentation.ui.theme.CardColor)
+                .height(200.dp)
+                .fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box {
+                        Image(
+                            painter = rememberQrBitmapPainter("https://citygo-1a359.web.app/qr_code/$userId/${pass.passId}"),
+                            contentDescription = null
+                        )
+                    }
+                    Spacer(modifier = Modifier.padding(8.dp))
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = "${it.source} \n${it.destination}",
+                            textAlign = TextAlign.Left, fontSize = 20.sp
+                        )
+                        Spacer(modifier = Modifier.padding(8.dp))
+                        Text(
+                            text = "${pass.purchaseDate} \n${pass.expiryDate}",
+                            textAlign = TextAlign.Left, fontSize = 20.sp
+                        )
+                        Spacer(modifier = Modifier.padding(8.dp))
+                        Text(
+                            text = "₹ ${it.price}",
+                            textAlign = TextAlign.Left, fontSize = 20.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+

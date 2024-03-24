@@ -17,9 +17,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.project.spass.domain.model.User
 import com.project.spass.presentation.dashboard_screen.component.AppBar
 import com.project.spass.presentation.graphs.detail_graph.DetailScreen
 import com.project.spass.presentation.graphs.home_graph.HomeNavGraph
+import kotlinx.coroutines.flow.StateFlow
 
 
 @SuppressLint("RememberReturnType")
@@ -28,6 +30,7 @@ fun HomeScreen(
     navController: NavHostController = rememberNavController(),
     scaffoldState: ScaffoldState = rememberScaffoldState(),
     boxScrollState: ScrollState = rememberScrollState(),
+    user: StateFlow<User?>
 ) {
     var searchText by remember {
         mutableStateOf("")
@@ -36,7 +39,6 @@ fun HomeScreen(
     val topBarVisibilityState = remember {
         mutableStateOf(true)
     }
-
     Scaffold(
         scaffoldState = scaffoldState,
         topBar = {
@@ -61,7 +63,8 @@ fun HomeScreen(
                 .padding(padding)
                 .verticalScroll(boxScrollState)
         ) {
-            HomeNavGraph(navController, searchText = searchText)
+            HomeNavGraph(navController, searchText = searchText, user)
         }
     }
+
 }

@@ -33,18 +33,16 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            <!--<intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <action android:name="android.nfc.action.TAG_DISCOVERED" />
                 <action android:name="android.nfc.action.TECH_DISCOVERED" />
                 <data android:mimeType="text/plain" />
-            </intent-filter>-->
+            </intent-filter>
 
-            <!--<meta-data
+            <meta-data
                 android:name="android.nfc.action.TECH_DISCOVERED"
-                android:resource="@xml/nfc_tech_filter" />-->
+                android:resource="@xml/nfc_tech_filter" />
         </activity>
 
         <activity
@@ -56,22 +54,5 @@
 
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".nfc.NFCActivity"
-            android:exported="true"
-            android:theme="@style/Theme.sPass">
-            <intent-filter>
-                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <action android:name="android.nfc.action.TAG_DISCOVERED" />
-                <action android:name="android.nfc.action.TECH_DISCOVERED" />
-                <data android:mimeType="text/plain" />
-            </intent-filter>
-            <meta-data
-                android:name="android.nfc.action.TECH_DISCOVERED"
-                android:resource="@xml/nfc_tech_filter" />
-        </activity>
     </application>
-
 </manifest>

@@ -107,7 +107,7 @@ fun SplashScreen(navController: NavController) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        text = "SPASS",
+                        text = "CityGo",
                         fontSize = 50.sp,
                         color = MaterialTheme.colors.PrimaryColor,
                         fontWeight = FontWeight.Bold,
@@ -125,9 +125,9 @@ fun SplashScreen(navController: NavController) {
                                             color = MaterialTheme.colors.TextColor,
                                         )
                                     ) {
-                                        append("SPASS.")
+                                        append("CityGo.")
                                     }
-                                    append(" Let's Shop!")
+                                    append(" Let's Travel!")
                                 },
                                 color = MaterialTheme.colors.TextColor,
                                 fontSize = 18.sp,
@@ -137,7 +137,7 @@ fun SplashScreen(navController: NavController) {
                         }
                         1 -> {
                             Text(
-                                text = "We help people connect with store\naround Bangladesh",
+                                text = "We help people to travel easily \naround city",
                                 color = MaterialTheme.colors.TextColor,
                                 fontSize = 18.sp,
                                 textAlign = TextAlign.Center
@@ -145,7 +145,7 @@ fun SplashScreen(navController: NavController) {
                         }
                         else -> {
                             Text(
-                                text = "We show easy way to shop.\nJust stay at home with us",
+                                text = "We provide easy way to book \n ticket and pass.\nJust stay at updated with us",
                                 color = MaterialTheme.colors.TextColor,
                                 fontSize = 18.sp,
                                 textAlign = TextAlign.Center

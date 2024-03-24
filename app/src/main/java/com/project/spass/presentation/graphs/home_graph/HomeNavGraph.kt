@@ -12,17 +12,21 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.project.spass.domain.model.User
 import com.project.spass.presentation.graphs.Graph
 import com.project.spass.presentation.graphs.detail_graph.DetailScreen
 import com.project.spass.presentation.graphs.detail_graph.detailNavGraph
 import com.project.spass.presentation.help_desk.HelpDesk
 import com.project.spass.presentation.screens.dashboard_screen.component.DashboardScreen
 import com.project.spass.presentation.screens.profile_screen.component.ProfileScreen
+import com.project.spass.presentation.screens.write_to_nfc_screen.component.WriteToNFC
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun HomeNavGraph(
     navController: NavHostController,
     searchText: String,
+    user: StateFlow<User?>
 ) {
 
     NavHost(
@@ -39,12 +43,16 @@ fun HomeNavGraph(
             PassScreen()
         }
         composable(ShopHomeScreen.ProfileScreen.route) {
-            ProfileScreen(navController)
+            ProfileScreen(navController,user)
         }
+
+        composable(ShopHomeScreen.WriteToNFC.route) {
+            WriteToNFC(navController)
+        }
+
         composable(ShopHomeScreen.HelpDeskScreen.route) {
             HelpDesk()
         }
-
 
         //detail graph
         detailNavGraph(navController = navController)

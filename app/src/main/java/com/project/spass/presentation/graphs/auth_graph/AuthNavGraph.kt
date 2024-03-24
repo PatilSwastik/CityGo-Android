@@ -6,6 +6,9 @@ import android.os.Build
 import android.util.Log
 import android.view.WindowInsets
 import android.view.WindowManager
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
@@ -15,15 +18,22 @@ import com.project.spass.presentation.screens.forget_password_screen.component.F
 import com.project.spass.presentation.screens.on_boarding_screen.component.SplashScreen
 import com.project.spass.presentation.screens.otp_screen.component.OTPScreen
 import com.project.spass.presentation.screens.pass_screen.compnent.PassScreen
+import com.project.spass.presentation.screens.sign_in_screen.AuthViewModel
 import com.project.spass.presentation.screens.sign_in_screen.component.LoginScreen
 import com.project.spass.presentation.screens.sign_success_screen.component.SignInScreen
 import com.project.spass.presentation.screens.sign_up_screen.component.SignUpScreen
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 
-fun NavGraphBuilder.authNavGraph(navController: NavHostController, context: Context) {
+@OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
+@ExperimentalAnimationApi
+@ExperimentalFoundationApi
+@ExperimentalCoroutinesApi
+@ExperimentalMaterialApi
+fun NavGraphBuilder.authNavGraph(navController: NavHostController, context: Context,authViewModel : AuthViewModel) {
     navigation(
         route = Graph.AUTHENTICATION,
-        startDestination = AuthScreen.SignInSuccess.route
+        startDestination = AuthScreen.SignInScreen.route
     ) {
         composable(AuthScreen.OnBoardingScreen.route) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -52,7 +62,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController, context: Cont
                 }
 
             }
-            LoginScreen(navController = navController)
+            LoginScreen(navController = navController,authViewModel = authViewModel)
         }
         composable(AuthScreen.ForgetPasswordScreen.route) {
             ForgetPasswordScreen(navController = navController)

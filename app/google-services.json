@@ -13,7 +13,12 @@
           "package_name": "com.project.spass"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "298074409690-96phfonpmp50o6bjv24akdjs127d3j45.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBJOKkKCgQ71BlR_4r1JTQWvMpwWwGOdZ4"
@@ -21,7 +26,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "298074409690-96phfonpmp50o6bjv24akdjs127d3j45.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

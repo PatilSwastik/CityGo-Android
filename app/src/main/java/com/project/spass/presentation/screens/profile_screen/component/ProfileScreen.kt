@@ -1,7 +1,7 @@
 package com.project.spass.presentation.screens.profile_screen.component
 
-import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,7 +30,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import com.google.firebase.auth.FirebaseAuth
@@ -41,18 +40,23 @@ import com.project.spass.presentation.common.component.DefaultBackArrow
 import com.project.spass.presentation.ui.theme.TextColor
 import com.project.spass.presentation.ui.theme.PrimaryColor
 import com.project.spass.R
+import com.project.spass.domain.model.User
 import com.project.spass.presentation.graphs.auth_graph.AuthScreen
 import com.project.spass.presentation.graphs.home_graph.ShopHomeScreen
+import com.project.spass.presentation.ui.animations.shimmerLoadingAnimation
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.tasks.await
 
 @Composable
 fun ProfileScreen(
-    navController: NavController
+    navController: NavController,
+    user: StateFlow<User?>
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val userId = FirebaseAuth.getInstance().currentUser?.uid
     var imageUrl by remember(userId) { mutableStateOf<String?>(null) }
+    var isLoadingCompleted by remember { mutableStateOf(false) }
     val storageRef = Firebase.storage.reference
 
     val imageUri = remember { mutableStateOf<String?>(null) }
@@ -102,15 +106,19 @@ fun ProfileScreen(
                 .clip(RoundedCornerShape(10.dp)),
             contentAlignment = Alignment.Center
         ) {
-            imageUrl?.let { url ->
-                val painter = rememberImagePainter(url)
-                Image(
-                    painter = painter,
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(CircleShape)
-                )
+            if(isLoadingCompleted){
+                imageUrl?.let { url ->
+                    val painter = rememberImagePainter(url)
+                    Image(
+                        painter = painter,
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .size(150.dp)
+                            .clip(CircleShape)
+                    )
+                }
+            }else{
+                ComponentCircle(isLoadingCompleted)
             }
         }
 
@@ -121,6 +129,7 @@ fun ProfileScreen(
                     val url = imageRef.downloadUrl.await()
                     // Update the imageUrl state with the downloaded URL
                     imageUrl = url.toString()
+                    isLoadingCompleted = true
                 } catch (e: Exception) {
                     // Handle exceptions
                     e.printStackTrace()
@@ -169,16 +178,14 @@ fun ProfileScreen(
                 .background(Color(0x8DB3B0B0), shape = RoundedCornerShape(10.dp))
                 .clip(RoundedCornerShape(10.dp))
                 .clickable {
-                    // Start New Activity to write to NFC
-                    val intent = android.content.Intent(context, com.project.spass.nfc.NFCActivity::class.java )
-                    context.startActivity(intent)
+                    navController.navigate(ShopHomeScreen.WriteToNFC.route)
                 }
                 .padding(5.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.user_icon),
+                painter = painterResource(id = R.drawable.nfc),
                 contentDescription = null,
                 modifier = Modifier.weight(0.05f), tint = MaterialTheme.colors.PrimaryColor
             )
@@ -190,16 +197,11 @@ fun ProfileScreen(
                 tint = MaterialTheme.colors.TextColor
             )
         }
-
-
         Spacer(modifier = Modifier.height(15.dp))
-
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(70.dp)
-
                 .background(Color(0x8DB3B0B0), shape = RoundedCornerShape(10.dp))
                 .clip(RoundedCornerShape(10.dp))
                 .clickable {
@@ -287,6 +289,19 @@ fun ProfileScreen(
 
     }
 }
+
+@Composable
+fun ComponentCircle(
+    isLoadingCompleted: Boolean
+) {
+    Box(
+        modifier = Modifier
+            .background(color = Color.LightGray, shape = CircleShape)
+            .size(150.dp)
+            .shimmerLoadingAnimation(isLoadingCompleted)
+    )
+}
+
 
 private fun onLogout(navController: NavController,context : Context){
     // clear shared preferences

@@ -48,6 +48,27 @@ class PaymentActivity: ComponentActivity(), PaymentStatusListener {
 
     override fun onTransactionCompleted(transactionDetails: TransactionDetails) {
         Toast.makeText(this, "Transaction completed by user..", Toast.LENGTH_SHORT).show()
+
+        // Update the user pass details in the database
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        val database = FirebaseDatabase.getInstance()
+        val userPassReference: DatabaseReference = database.getReference("users/$userId/passes")
+
+        // Get the current pass details
+        val passId = userPassReference.child("passId").get().toString()
+        val expiryDate = userPassReference.child("expiryDate").get().toString()
+        val purchaseDate = userPassReference.child("purchaseDate").get().toString()
+
+        println("Pass ID: $passId")
+        println("Expiry Date: $expiryDate")
+        println("Purchase Date: $purchaseDate")
+
+
+        /*userPassReference.child("transactionId").setValue(transactionDetails.transactionId)
+        userPassReference.child("purchaseDate").setValue(transactionDetails.transactionDate)
+        userPassReference.child("expiryDate").setValue(transactionDetails.transactionDate)*/
+
+        finish()
     }
 }
 
@@ -68,13 +89,13 @@ data class CurrentUserData(
 fun PaymentScreen(paymentActivity: PaymentActivity , months: String , passId: String, purchasedDate : String) {
     val ctx = LocalContext.current
     val activity = (LocalContext.current as? Activity)
-    GetPassDetails(passId = FirebaseAuth.getInstance().currentUser!!.uid){
+    GetPassDetails {
         makePayment(
             (it.price)!!.toDouble().toString(),
             "sucess@upi",
             "Swastik Patil",
-            "Payment for ${months} months pass",
-            "test",
+            "Payment for $months months pass",
+            passId,
             ctx,
             activity!!,
             paymentActivity
@@ -85,22 +106,22 @@ fun PaymentScreen(paymentActivity: PaymentActivity , months: String , passId: St
 }
 
 @Composable
-private fun GetPassDetails(passId: String?,oncallback : (PassDataFromDepot)->Unit){
+private fun GetPassDetails(callback : (PassDataFromDepot) -> Unit){
     var passId by remember { mutableStateOf<String?>(null) }
     var passDataFromDepot by remember { mutableStateOf<PassDataFromDepot?>(null) }
     var currentUserData by remember { mutableStateOf<CurrentUserData?>(null) }
 
-    fetchPassId(){ it ->
+    fetchPassId { it ->
         println(it)
         currentUserData = it
-        passId = currentUserData!!.passId
+        // passId = currentUserData!!.passId
         fetchOriginalPassData(passId.toString()){
             passDataFromDepot = it
         }
     }
 
     passDataFromDepot?.let{
-        oncallback(passDataFromDepot!!)
+        callback(passDataFromDepot!!)
     }
 
 }
@@ -146,9 +167,6 @@ private fun fetchPassId(callback: (CurrentUserData) -> Unit) {
                 address = dataSnapshot.child("address").value.toString(),
                 phoneNumber = dataSnapshot.child("phoneNumber").value.toString(),
                 profileImage = dataSnapshot.child("profileImage").value.toString(),
-                expiryDate = dataSnapshot.child("passes").child("expiryDate").value.toString(),
-                purchaseDate = dataSnapshot.child("passes").child("purchaseDate").value.toString(),
-                passId = dataSnapshot.child("passes").child("passId").value.toString(),
             )
             callback(currentUserData)
         }
