@@ -1,19 +1,14 @@
 package com.project.spass.presentation.screens.pass_detail_screen.component
 
 import android.app.Activity
-import android.content.Intent
-import android.content.res.Configuration
-import android.hardware.display.DisplayManager
-import android.view.Display
+import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,23 +21,13 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerColors
-import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DatePickerFormatter
-import androidx.compose.material3.DatePickerState
-import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SelectableDates
@@ -61,22 +46,23 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.project.spass.R
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.project.spass.payment.PaymentActivity
+import com.project.spass.payment.makePayment
 import com.project.spass.presentation.screens.pass_detail_screen.PassDetailViewModel
-import com.project.spass.presentation.ui.theme.PrimaryColor
-import com.project.spass.presentation.ui.theme.TextColor
+import com.project.spass.presentation.screens.pass_screen.compnent.PassDataFromDepot
 import java.text.SimpleDateFormat
 import java.util.Date
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PassDetailScreen(
     viewModel: PassDetailViewModel = hiltViewModel(),
@@ -95,7 +81,7 @@ fun PassDetailScreen(
             CircularProgressIndicator()
         }
     } else if (state.passDetail != null) {
-        var pass = state.passDetail
+        val pass = state.passDetail
         var months by remember { mutableIntStateOf(1) }
         var date by remember { mutableStateOf("") }
         val lightBlue = Color(0xFFC8D2E9)
@@ -286,12 +272,8 @@ fun PassDetailScreen(
                         .padding(top = 30.dp, bottom = 30.dp)
                         .height(60.dp),
                     onClick = {
-                        // Use Payment Activity to make payment
-                        val intent = Intent(context, PaymentActivity::class.java)
-                        intent.putExtra("passId", pass.id)
-                        intent.putExtra("months", months)
-                        intent.putExtra("purchasedDate",date)
-                        context.startActivity(intent)
+                       // Send data to payment activity
+                        payment(PaymentActivity(), months.toString(), pass.id.toString(), date, context)
                     }
                 ) {
                     Text(text = "BUY NOW", fontSize = 16.sp)
@@ -381,4 +363,42 @@ fun MyDatePickerDialog(onDateSelected: (String) -> Unit) {
 private fun convertMillisToDate(millis: Long): String {
     val formatter = SimpleDateFormat("dd/MM/yyyy")
     return formatter.format(Date(millis))
+}
+
+fun payment(
+    paymentActivity: PaymentActivity, months: String, passId: String, purchasedDate: String,
+    context: Context
+) {
+    getPassDetails(passId){
+        val price = (it.price)!!.toDouble() * months.toDouble()
+        makePayment(
+            price.toString(),
+            "sucess@upi",
+            "Swastik Patil",
+            "Payment for $months months pass",
+            passId,
+            context,
+            context as Activity,
+            paymentActivity
+        )
+    }
+ }
+
+fun getPassDetails(passId: String,callback : (PassDataFromDepot) -> Unit){
+    val database = FirebaseDatabase.getInstance()
+    val userPassReference: DatabaseReference = database.getReference("passes/$passId")
+    userPassReference.addListenerForSingleValueEvent(object : ValueEventListener {
+        override fun onDataChange(dataSnapshot: DataSnapshot) {
+            val passDataFromDepot = PassDataFromDepot(
+                passId = dataSnapshot.child("passId").value.toString(),
+                source = dataSnapshot.child("source").value.toString(),
+                destination = dataSnapshot.child("destination").value.toString(),
+                price = dataSnapshot.child("price").value.toString()
+            )
+            callback(passDataFromDepot)
+        }
+        override fun onCancelled(databaseError: DatabaseError) {
+            // Handle database error
+        }
+    })
 }

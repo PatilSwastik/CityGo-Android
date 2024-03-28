@@ -97,6 +97,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = hil
                 text = "Google sign in failed"
             }
         }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

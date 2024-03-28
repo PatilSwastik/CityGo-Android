@@ -27,23 +27,9 @@ import dev.shreyaspatil.easyupipayment.model.TransactionDetails
 
 class PaymentActivity: ComponentActivity(), PaymentStatusListener {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        // Get Payment Bundle
-        val bundle = intent.extras
-        val months = bundle?.getString("months")
-        val passId = bundle?.getString("passId")
-        val startDate = bundle?.getString("purchasedDate")
-
-        // Get pass details from backend
-
-        setContent {
-            PaymentScreen(paymentActivity = this@PaymentActivity, months = months.toString(), passId = passId.toString(),purchasedDate = startDate.toString())
-        }
-    }
-
     override fun onTransactionCancelled() {
         Toast.makeText(this, "Transaction canceled by user..", Toast.LENGTH_SHORT).show()
+        println("Transaction cancelled by user..")
     }
 
     override fun onTransactionCompleted(transactionDetails: TransactionDetails) {
@@ -63,11 +49,6 @@ class PaymentActivity: ComponentActivity(), PaymentStatusListener {
         println("Expiry Date: $expiryDate")
         println("Purchase Date: $purchaseDate")
 
-
-        /*userPassReference.child("transactionId").setValue(transactionDetails.transactionId)
-        userPassReference.child("purchaseDate").setValue(transactionDetails.transactionDate)
-        userPassReference.child("expiryDate").setValue(transactionDetails.transactionDate)*/
-
         finish()
     }
 }
@@ -86,9 +67,9 @@ data class CurrentUserData(
 )
 
 @Composable
-fun PaymentScreen(paymentActivity: PaymentActivity , months: String , passId: String, purchasedDate : String) {
+fun PaymentScreen(paymentActivity: PaymentActivity, months: String, passId: String, purchasedDate : String) {
     val ctx = LocalContext.current
-    val activity = (LocalContext.current as? Activity)
+    val activity = (ctx as? Activity)
     GetPassDetails {
         makePayment(
             (it.price)!!.toDouble().toString(),
@@ -126,12 +107,15 @@ private fun GetPassDetails(callback : (PassDataFromDepot) -> Unit){
 
 }
 
-private fun makePayment(
+fun makePayment(
     amount: String,
     upi: String,
     name: String,
     desc: String,
-    transcId: String, ctx: Context, activity: Activity, mainActivity: PaymentStatusListener
+    transcId: String,
+    ctx: Context,
+    activity: Activity,
+    mainActivity: PaymentStatusListener
 ) {
     try {
         val easyUpiPayment = EasyUpiPayment(activity) {

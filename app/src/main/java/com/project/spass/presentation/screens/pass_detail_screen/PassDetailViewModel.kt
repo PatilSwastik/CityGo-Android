@@ -28,8 +28,8 @@ class PassDetailViewModel @Inject constructor(
         getPassDetail(passId!!.toInt())
     }
 
-    private fun getPassDetail(productId: Int) {
-        getPassDetailUseCase(productId).onEach { result ->
+    private fun getPassDetail(passId: Int) {
+        getPassDetailUseCase(passId).onEach { result ->
             when (result) {
                 is Resource.Loading -> {
                     _state.value = PassDetailState(isLoading = true)

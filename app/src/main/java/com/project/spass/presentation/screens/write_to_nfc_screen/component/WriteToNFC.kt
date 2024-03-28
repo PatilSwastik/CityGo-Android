@@ -40,8 +40,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.project.spass.presentation.MainActivity
 import com.project.spass.presentation.common.component.DefaultBackArrow
+import com.project.spass.presentation.screens.pass_screen.compnent.CurrentUserData
+import com.project.spass.presentation.screens.pass_screen.compnent.PassDataFromDepot
 import com.project.spass.presentation.ui.theme.TextColor
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -133,8 +140,11 @@ private fun writeNfcTag(
     }
 
     val userId = FirebaseAuth.getInstance().currentUser?.uid
+    fetchPassId{
+
+
     if (userId != null) {
-        val url = "https://citygo-1a359.web.app/users/$userId"
+        val url = "https://citygo-1a359.web.app/"
         val ndefMessage = NdefMessage(arrayOf(
             NdefRecord.createUri(url)
         ))
@@ -144,17 +154,17 @@ private fun writeNfcTag(
         val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
         if(tag == null){
             onResult("Tag not found")
-            return
+            return@fetchPassId
         }
         val ndef = Ndef.get(tag)
         if (ndef == null) {
             onResult("Tag is not NDEF-formatted.")
-            return
+            return@fetchPassId
         }
 
         if (!ndef.isWritable) {
             onResult("Tag is not writable.")
-            return
+            return@fetchPassId
         }
 
         ndef.connect()
@@ -165,4 +175,27 @@ private fun writeNfcTag(
     }else{
         onResult("User not found")
     }
+    }
+
+}
+
+private fun fetchPassId(callback: (String) -> Unit) {
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
+    val database = FirebaseDatabase.getInstance()
+    var passId: String
+    val userPassReference: DatabaseReference = database.getReference("users").child(userId.toString())
+
+    userPassReference.addListenerForSingleValueEvent(object : ValueEventListener {
+        override fun onDataChange(dataSnapshot: DataSnapshot) {
+
+            // get pass Id
+            var children = dataSnapshot.child("passes").children
+            passId = children.first().value.toString()
+            callback(passId)
+        }
+
+        override fun onCancelled(databaseError: DatabaseError) {
+            // Handle database error
+        }
+    })
 }
